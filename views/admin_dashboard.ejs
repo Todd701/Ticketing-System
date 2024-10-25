@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Dashboard</title>
+    <link rel="stylesheet" href="/styles.css">
+</head>
+<body>
+    <div class="navbar">
+        <a href="/ticket" class="button">View Tickets</a>
+        <h1 class="title">Admin Dashboard</h1>
+        <a href="/logout" class="button">Logout</a>
+    </div>
+
+    <div class="admin-dashboard">
+        <div class="dashboard-container">
+            <!-- Categories with form to create new categories -->
+            <div class="category-container">
+                <h2>Categories</h2>
+                <ul>
+                    <% categories.forEach(function(category) { %>
+                        <li><%= category.name %></li>
+                    <% }); %>
+                </ul>
+                <form action="/admin/categories/create" method="POST">
+                    <input type="text" name="name" placeholder="New Category" required>
+                    <button type="submit">Add Category</button>
+                </form>
+            </div>
+
+            <!-- Table of users -->
+            <div class="user-table-container">
+                <h2>Users</h2>
+                <table class="user-table">
+                    <thead>
+                        <tr>
+                            <th>Mail</th>
+                            <th>Name</th>
+                            <th>Role</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <% users.forEach(function(user) { %>
+                            <tr>
+                                <td><%= user.mail %></td>
+                                <td><%= user.name %></td>
+                                <td><%= user.role.charAt(0).toUpperCase() + user.role.slice(1) %></td>
+                                <td>
+                                    <!-- Button to promote user to admin -->
+                                    <% if (user.role === 'user') { %>
+                                        <form action="/admin/users/<%= user.id %>/make-admin" method="POST">
+                                            <button type="submit">Make Admin</button>
+                                        </form>
+                                    <% } %>
+                                </td>
+                            </tr>
+                        <% }); %>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>    
+</body>
+</html>

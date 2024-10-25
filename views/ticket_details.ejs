@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ticket Details</title>
+    <link rel="stylesheet" href="/styles.css">
+    <link rel="stylesheet" href="/ticket-details.css">
+</head>
+<body>
+    <div class="navbar">
+        <a href="/ticket" class="button">View Tickets</a>
+        <h1 class="title">Ticket Details</h1>
+        <a href="/logout" class="button">Logout</a>
+    </div>
+
+    <div class="ticket-details-container">
+        <!-- Ticket title and main ticket details -->
+        <div class="ticket-main-content">
+            <h2 class="ticket-title"><%= ticket.title %></h2>
+            <div class="ticket-description-box">
+                <p><strong>Description:</strong></p>
+                <div class="description-content">
+                    <%= ticket.description %>
+                </div>
+            </div>
+    
+            <!-- Attachmments -->
+            <div class="ticket-attachments-box">
+                <% if (attachments && attachments.length > 0) { %>
+                    <p><strong>Attachments:</strong></p>
+                    <div class="attachment-items">
+                        <% attachments.forEach(function(attachment) { %>
+                            <div class="attachment-item">
+                                <% if (/\.(jpg|jpeg|png|gif)$/i.test(attachment.file_path)) { %>
+                                    <img src="/uploads/<%= attachment.file_path %>" alt="<%= attachment.file_name %>" class="attachment-image">
+                                <% } else { %>
+                                    <a href="/uploads/<%= attachment.file_path %>" class="attachment-link"><%= attachment.file_name %></a>
+                                <% } %>
+                            </div>
+                        <% }); %>
+                    </div>
+                <% } else { %>
+                    <p>No attachments</p>
+                <% } %>
+            </div>
+        </div>
+
+        <!-- Changing the status and for admins category -->
+        <div class="ticket-actions-box">
+            <div class="status-section">
+                <p><strong>Status:</strong></p>
+                <form action="/ticket/<%= ticket.id %>/update-status" method="POST" class="inline-form">
+                    <select id="status" name="status">
+                        <option value="open" <%= ticket.status === 'open' ? 'selected' : '' %>>Open</option>
+                        <option value="closed" <%= ticket.status === 'closed' ? 'selected' : '' %>>Closed</option>
+                    </select>
+                    <button type="submit" class="update-button">Update Status</button>
+                </form>
+                <form action="/ticket/<%= ticket.id %>/update-category" method="POST" class="inline-form">
+                    <% if (['admin', 'superadmin'].includes(userRole)) { %>
+                        <select id="category" name="category">
+                            <% categories.forEach(function(category) { %>
+                                <option value="<%= category.name %>" <%= category.name === ticket.category ? 'selected' : '' %>><%= category.name %></option>
+                            <% }); %>
+                        </select>
+                        <button type="submit" class="button">Update Category</button>
+                    <% } %>
+                </form>
+            </div>
+
+            <div class="ticket-info-box">
+                <!-- Ticket information and assigning agent -->
+                <p><strong>User:</strong> <%= ticket.creator %></p>
+                <p><strong>User Mail:</strong> <%= ticket.creator_mail %></p>
+                <p><strong>Agent:</strong> <%= ticket.agent ? ticket.agent : 'Unassigned' %></p>
+                <% if (ticket.agent) {%> 
+                    <p><strong>Agent Mail: </strong><%=ticket.agent_mail%></p>
+                <% } %>
+                <p><strong>Category: </strong> <%= ticket.category %></p>
+                <% if (!ticket.agent && ['admin', 'superadmin'].includes(userRole)) { %>
+                    <form action="/ticket/<%= ticket.id %>/claim" method="POST">
+                        <button type="submit" class="button">Claim Ticket</button>
+                    </form>
+                <% } %>                
+                
+                <p><strong>Created:</strong> <%= new Date(ticket.created_at).toLocaleString() %></p>
+                <p><strong>Update:</strong> <%= new Date(ticket.updated_at).toLocaleString() %> - <%= ticket.last_update_type %></p>
+            </div>
+
+            <!-- Comment section, options to add a comment -->
+            <div class="comments-section">
+                <h3>Comments</h3>
+                <div class="comments-box">
+                    <% if (comments.length > 0) { %>
+                        <% comments.forEach(function(comment) { %>
+                            <div class="comment">
+                                <p><strong><%= comment.commenter %>:</strong> <%= comment.comment %> 
+                                    <small>(<%= new Date(comment.created_at).toLocaleString() %>)</small>
+                                </p>
+                            </div>
+                        <% }); %>
+                    <% } else { %>
+                        <p>No comments yet.</p>
+                    <% } %>
+                </div>
+                <!-- Only add comments if not closed and it's the user or admin assigned -->
+                <% if (ticket.status === 'closed') { %>
+                    <p class="comment-closed-message">Ticket is closed. Comments are disabled.</p>
+                <% } else if (ticket.user_id === user.id || ticket.agent_id === user.id) { %>
+                    <form action="/ticket/<%= ticket.id %>/comment" method="POST">
+                        <textarea name="comment" placeholder="Leave a comment... (Max 200 characters)" maxlength="200" required></textarea>
+                        <button type="submit">Add Comment</button>
+                    </form>
+                <% } else { %>
+                    <p class="comment-closed-message">Not authorized to make comments...</p>
+                <% } %>
+            </div>
+        </div>
+    </div>
+
+    <div class="image-modal">
+        <span class="close">&times;</span>
+        <img src="" alt="Enlarged Image">
+    </div>
+
+    <!-- JavaScript to handle image modal functionality -->
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const images = document.querySelectorAll('.attachment-image');
+            const modal = document.querySelector('.image-modal');
+            const modalImg = modal.querySelector('img');
+            const closeModal = modal.querySelector('.close');
+
+            images.forEach(image => {
+                image.addEventListener('click', () => {
+                    modal.style.display = 'flex';
+                    modalImg.src = image.src;
+                });
+            });
+
+            modal.addEventListener('click', (event) => {
+                if (event.target === modal || event.target === closeModal) {
+                    modal.style.display = 'none';
+                }
+            });
+        });
+    </script>
+</body>
+</html>

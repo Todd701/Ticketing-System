@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Create Ticket</title>
+    <link rel="stylesheet" href="/styles.css">
+</head>
+<body>
+    <div class="navbar">
+        <a href="/" class="button">View Tickets</a>
+        <h1 class="title">Create Ticket</h1>
+        <a href="/logout" class="button">Logout</a>
+    </div>
+
+    <div class="content create-ticket-content">
+        <form id="createTicketForm" enctype="multipart/form-data">
+            <div class="form-group">
+                <input type="text" id="title" name="title" maxlength="30" placeholder="Title (Max 30 characters)" required>
+            </div>
+
+            <div class="form-group">
+                <textarea id="description" name="description" placeholder="Description (Max 600 Characters)" maxlength="600" required></textarea>
+            </div>
+
+            <div class="form-group">
+                <select id="category" name="category" required>
+                    <option value="" disabled selected>Select Category</option>
+                    <% categories.forEach(function(category) { %>
+                        <option value="<%= category.name %>"><%= category.name %></option>
+                    <% }); %>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <input type="file" id="attachments" name="attachments" multiple>
+                <small>Maximum 3 files, up to 5 MB each (JPEG, PNG, PDF only)</small>
+            </div>
+
+            <div id="error-message"></div>
+
+            <div class="nav-buttons">
+                <button type="submit">Create Ticket</button>
+                <a href="/" class="button cancel-button">Cancel</a>
+            </div>
+        </form>
+    </div>
+
+    <!-- Java script for form submission handling -->
+    <script>
+        document.getElementById('createTicketForm').addEventListener('submit', async function (e) {
+            e.preventDefault();
+            const form = e.target;
+            const formData = new FormData(form);
+            const errorMessageDiv = document.getElementById('error-message');
+    
+            try {
+                const response = await fetch('/ticket/create', {
+                    method: 'POST',
+                    body: formData
+                });
+    
+                const responseData = await response.json();
+    
+                if (responseData.success) {
+                    window.location.href = '/ticket';
+                } else if (!response.ok) {
+                    errorMessageDiv.textContent = responseData.message || 'An error occurred.';
+                    errorMessageDiv.style.display = 'block';
+    
+                    document.getElementById('title').value = formData.get('title');
+                    document.getElementById('description').value = formData.get('description');
+                    document.getElementById('category').value = formData.get('category');
+                }
+            } catch (error) {
+                errorMessageDiv.textContent = 'Error submitting form.';
+                errorMessageDiv.style.display = 'block';
+            }
+        });
+    </script>
+
+</body>
+</html>
